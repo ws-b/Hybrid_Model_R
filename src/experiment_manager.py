@@ -1,11 +1,9 @@
-# src/experiment_manager.py
-
 import os
+import joblib
 import json
 import numpy as np
 from config import SELECTED_VEHICLE
 
-# Numpy 데이터를 JSON으로 저장하기 위한 인코더
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -18,19 +16,19 @@ class NpEncoder(json.JSONEncoder):
 
 class ExperimentManager:
     def __init__(self, results_dir='/home/ubuntu/GITHUB/NEW_Hybrid_Model/results'):
-        # Optuna 튜닝 결과를 저장할 디렉토리 추가
         self.optuna_dir = os.path.join(results_dir, 'optuna')
         self.log_dir = os.path.join(results_dir, 'logs', SELECTED_VEHICLE)
         self.params_dir = os.path.join(results_dir, 'hyperparameters', SELECTED_VEHICLE)
         self.final_results_path = os.path.join(results_dir, f"{SELECTED_VEHICLE}_final_results.json")
+        self.models_dir = os.path.join(results_dir, 'trained_models', SELECTED_VEHICLE)
         
-        os.makedirs(self.optuna_dir, exist_ok=True) # 디렉토리 생성
+        os.makedirs(self.optuna_dir, exist_ok=True)
         os.makedirs(self.log_dir, exist_ok=True)
         os.makedirs(self.params_dir, exist_ok=True)
+        os.makedirs(self.models_dir, exist_ok=True)
 
     def get_optuna_storage_path(self):
         """Returns the file path for the Optuna study database."""
-        # 모든 모델의 튜닝 결과를 하나의 DB 파일에 저장
         return f"sqlite:///{os.path.join(self.optuna_dir, 'optuna_study.db')}"
 
     def _get_log_filename(self, model_name, size, iteration):
@@ -55,7 +53,6 @@ class ExperimentManager:
 
         try:
             with open(log_path, 'w') as f:
-                # NpEncoder를 사용하여 numpy 데이터를 JSON으로 변환
                 json.dump(result_data, f, indent=4, cls=NpEncoder)
             print(f"      Result for {model_name} logged to {log_path}")
         except IOError as e:
@@ -100,3 +97,13 @@ class ExperimentManager:
             print(f"Final validation results saved to {self.final_results_path}")
         except IOError as e:
             print(f"Error saving final results: {e}")
+
+    def save_model_and_scaler(self, model_name, model_type, artifacts):
+        """학습된 모델과 스케일러를 함께 저장합니다."""
+        filename = f"{model_type}_{model_name}_artifacts.joblib"
+        path = os.path.join(self.models_dir, filename)
+        try:
+            joblib.dump(artifacts, path)
+            print(f"Artifacts for {model_name} ({model_type}) saved to {path}")
+        except Exception as e:
+            print(f"Error saving artifacts: {e}")

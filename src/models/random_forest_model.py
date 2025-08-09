@@ -1,5 +1,3 @@
-# src/models/random_forest_model.py
-
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
@@ -34,7 +32,6 @@ class RandomForestModel(BaseModel):
                 'max_depth': trial.suggest_int('max_depth', 5, 30),
                 'min_samples_split': trial.suggest_int('min_samples_split', 2, 20),
                 'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 10),
-                # 'max_features'의 선택지에서 'auto'를 제거합니다.
                 'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2', 0.6, 0.8]),
                 'random_state': 42,
                 'n_jobs': -1

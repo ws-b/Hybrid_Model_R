@@ -1,5 +1,3 @@
-# src/models/transformer_model.py
-
 import torch
 import torch.nn as nn
 import numpy as np
@@ -8,7 +6,7 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from .base_model import BaseModel
-# N_TRIALS_OPTUNA를 config에서 import 합니다.
+
 from config import TRANSFORMER_FEATURES, N_TRIALS_OPTUNA
 
 class TransformerModel(BaseModel):
@@ -66,7 +64,8 @@ class TransformerModel(BaseModel):
         X_train_scaled = self.scaler.transform(X_train_flat)
         
         self.model = nn.Linear(X_train_scaled.shape[1], 1)
-        return self.model
+        
+        return self.model, self.scaler
 
     def predict(self, test_data, model_type='hybrid'):
         X_test_seq, _ = self._get_features_and_target(test_data, model_type)

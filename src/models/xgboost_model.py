@@ -1,5 +1,3 @@
-# src/models/xgboost_model.py
-
 import xgboost as xgb
 import numpy as np
 import optuna
@@ -33,13 +31,12 @@ class XGBoostModel(BaseModel):
                 'objective': 'reg:squarederror',
                 'eval_metric': 'rmse',
                 'booster': 'gbtree',
-                # --- 논문에서 튜닝한 파라미터 ---
                 'max_depth': trial.suggest_int('max_depth', 3, 10),
                 'learning_rate': trial.suggest_float('learning_rate', 1e-4, 0.3, log=True),
                 'n_estimators': trial.suggest_int('n_estimators', 100, 2000),
                 'reg_alpha': trial.suggest_float('reg_alpha', 1e-4, 1e5, log=True), # L1
                 'reg_lambda': trial.suggest_float('reg_lambda', 1e-4, 1e5, log=True), # L2
-                # --- 논문에서 튜닝하지 않은 파라미터 (기본값 사용) ---
+                # --- 튜닝하지 않은 파라미터 (기본값 사용) ---
                 # 'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
                 # 'gamma': trial.suggest_float('gamma', 1e-4, 1.0, log=True),
                 # 'subsample': trial.suggest_float('subsample', 0.5, 1.0),

@@ -1,5 +1,3 @@
-# src/utils.py
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
@@ -79,7 +77,7 @@ def compute_energy_mape(test_data, predictions):
     # 시간 순으로 정렬 보장
     eval_df.sort_values(by=['trip_id', 'time'], inplace=True)
 
-    # [수정] 수치 적분을 위한 에너지 계산
+    # 수치 적분을 위한 에너지 계산
     total_energies = []
     for trip_id in eval_df['trip_id'].unique():
         trip_df = eval_df[eval_df['trip_id'] == trip_id]

@@ -1,5 +1,3 @@
-# main.py
-
 import os
 import numpy as np
 import pandas as pd
@@ -14,7 +12,6 @@ from src.data_loader import DataLoader
 from src.experiment_manager import ExperimentManager
 from src.utils import compute_physics_rmse, scale_hyperparameters, compute_energy_mape
 
-# 모델 클래스 Import
 from src.models.xgboost_model import XGBoostModel
 from src.models.random_forest_model import RandomForestModel
 from src.models.mlp_model import MLPModel
@@ -26,7 +23,6 @@ def run_experiment():
     if MODELS_TO_SKIP:
         print(f"Skipping the following models as requested: {MODELS_TO_SKIP}")
 
-    # --- 데이터 준비 단계 ---
     data_loader = DataLoader()
     full_dataset = data_loader.get_full_dataset()
 
@@ -47,7 +43,7 @@ def run_experiment():
         print(f"\nTraining set has {N_total_train} trips. Sampling down to {MAX_TUNING_TRIPS} for hyperparameter tuning.")
         tuning_trip_ids = pd.Series(train_trip_ids).sample(n=MAX_TUNING_TRIPS, random_state=42).values
         tuning_set = full_train_set[full_train_set['trip_id'].isin(tuning_trip_ids)].copy()
-    
+
     N_tuning_set = len(tuning_set['trip_id'].unique())
     print(f"Using {N_tuning_set} trips for hyperparameter tuning.")
 
@@ -68,7 +64,7 @@ def run_experiment():
         if model_name in MODELS_TO_SKIP:
             print(f"Skipping tuning for {model_name}.")
             continue
-            
+
         print(f"Tuning {model_name}...")
         best_params = experiment_manager.load_hyperparameters(model_name)
         if not best_params:
@@ -147,51 +143,73 @@ def run_experiment():
 
     print("\nExperiment loop completed.")
 
-    # # --- 3단계: 최종 모델 검증 (Test Set) ---
-    # print("\n" + "="*80)
-    # print("--- Step 3: Final Validation on Unseen Test Set ---")
-    # print("="*80)
+    # --- 3단계: 최종 모델 검증 (Test Set) ---
+    print("\n" + "="*80)
+    print("--- Step 3: Final Validation on Unseen Test Set ---")
+    print("="*80)
 
-    # final_results = {}
+    final_results = {}
 
-    # physics_power_rmse = compute_physics_rmse(test_set)
-    # physics_energy_mape = compute_energy_mape(test_set, test_set['physics_prediction'])
-    # final_results["Physics_Based"] = {"Power_RMSE": physics_power_rmse, "Energy_MAPE": physics_energy_mape}
-    # print(f"Physics-Based Model:\n  - Power RMSE: {physics_power_rmse:.2f}\n  - Energy MAPE: {physics_energy_mape:.2f} %")
+    physics_power_rmse = compute_physics_rmse(test_set)
+    physics_energy_mape = compute_energy_mape(test_set, test_set['physics_prediction'])
+    final_results["Physics_Based"] = {"Power_RMSE": physics_power_rmse, "Energy_MAPE": physics_energy_mape}
+    print(f"Physics-Based Model:\n  - Power RMSE: {physics_power_rmse:.2f}\n  - Energy MAPE: {physics_energy_mape:.2f} %")
 
-    # for model_name in MODELS_TO_RUN:
-    #     if model_name in MODELS_TO_SKIP:
-    #         print(f"\nSkipping final validation for {model_name}.")
-    #         continue
-            
-    #     print(f"\nValidating {model_name} on the test set...")
-    #     model_instance = models[model_name]
-    #     best_params = experiment_manager.load_hyperparameters(model_name)
-    #     if best_params is None: continue
+    for model_name in MODELS_TO_RUN:
+        if model_name in MODELS_TO_SKIP:
+            print(f"\nSkipping final validation for {model_name}.")
+            continue
 
-    #     try:
-    #         model_instance.train(full_train_set, best_params, model_type='hybrid')
-    #         predictions = model_instance.predict(test_set, model_type='hybrid')
-    #         power_rmse = np.sqrt(mean_squared_error(test_set['target'], predictions))
-    #         energy_mape = compute_energy_mape(test_set, predictions)
-    #         final_results[f"Hybrid_{model_name}"] = {"Power_RMSE": power_rmse, "Energy_MAPE": energy_mape}
-    #         print(f"  Hybrid {model_name}:\n    - Power RMSE: {power_rmse:.2f}\n    - Energy MAPE: {energy_mape:.2f} %")
-    #     except Exception as e:
-    #         print(f"    Error during final validation of Hybrid {model_name}: {e}")
+        print(f"\nValidating {model_name} on the test set...")
+        model_instance = models[model_name]
+        best_params = experiment_manager.load_hyperparameters(model_name)
+        if best_params is None: continue
 
-    #     try:
-    #         model_instance.train(full_train_set, best_params, model_type='ml_only')
-    #         predictions = model_instance.predict(test_set, model_type='ml_only')
-    #         power_rmse = np.sqrt(mean_squared_error(test_set['target'], predictions))
-    #         energy_mape = compute_energy_mape(test_set, predictions)
-    #         final_results[f"OnlyML_{model_name}"] = {"Power_RMSE": power_rmse, "Energy_MAPE": energy_mape}
-    #         print(f"  OnlyML {model_name}:\n    - Power RMSE: {power_rmse:.2f}\n    - Energy MAPE: {energy_mape:.2f} %")
-    #     except Exception as e:
-    #         print(f"    Error during final validation of OnlyML {model_name}: {e}")
+        # Hybrid 모델 학습, 저장 및 평가
+        try:
+            trained_artifacts = model_instance.train(full_train_set, best_params, model_type='hybrid')
 
-    # experiment_manager.log_final_results(final_results)
+            artifacts_to_save = {}
+            if model_name in ['MLP', 'Transformer']:
+                model, scaler = trained_artifacts
+                artifacts_to_save = {'model': model, 'scaler': scaler}
+            else:
+                model = trained_artifacts
+                artifacts_to_save = {'model': model}
+            experiment_manager.save_model_and_scaler(model_name, 'hybrid', artifacts_to_save)
 
-    # print("\nExperiment completed. To see the final results, run 'python process_results.py' and 'python plot_final_figure.py'")
+            predictions = model_instance.predict(test_set, model_type='hybrid')
+            power_rmse = np.sqrt(mean_squared_error(test_set['target'], predictions))
+            energy_mape = compute_energy_mape(test_set, predictions)
+            final_results[f"Hybrid_{model_name}"] = {"Power_RMSE": power_rmse, "Energy_MAPE": energy_mape}
+            print(f"  Hybrid {model_name}:\n    - Power RMSE: {power_rmse:.2f}\n    - Energy MAPE: {energy_mape:.2f} %")
+        except Exception as e:
+            print(f"    Error during final validation of Hybrid {model_name}: {e}")
+
+        # OnlyML 모델 학습, 저장 및 평가
+        try:
+            trained_artifacts_ml = model_instance.train(full_train_set, best_params, model_type='ml_only')
+
+            artifacts_to_save_ml = {}
+            if model_name in ['MLP', 'Transformer']:
+                model_ml, scaler_ml = trained_artifacts_ml
+                artifacts_to_save_ml = {'model': model_ml, 'scaler': scaler_ml}
+            else:
+                model_ml = trained_artifacts_ml
+                artifacts_to_save_ml = {'model': model_ml}
+            experiment_manager.save_model_and_scaler(model_name, 'ml_only', artifacts_to_save_ml)
+
+            predictions = model_instance.predict(test_set, model_type='ml_only')
+            power_rmse = np.sqrt(mean_squared_error(test_set['target'], predictions))
+            energy_mape = compute_energy_mape(test_set, predictions)
+            final_results[f"OnlyML_{model_name}"] = {"Power_RMSE": power_rmse, "Energy_MAPE": energy_mape}
+            print(f"  OnlyML {model_name}:\n    - Power RMSE: {power_rmse:.2f}\n    - Energy MAPE: {energy_mape:.2f} %")
+        except Exception as e:
+            print(f"    Error during final validation of OnlyML {model_name}: {e}")
+
+    experiment_manager.log_final_results(final_results)
+
+    print("\nExperiment completed. To see the final results, run 'python process_results.py' and 'python plot_final_figure.py'")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-# src/models/linear_regression_model.py
-
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from .base_model import BaseModel
@@ -22,8 +20,6 @@ class LinearRegressionModel(BaseModel):
         return X, y
 
     def find_best_params(self, train_data, storage_path):
-        # Linear Regression은 튜닝할 하이퍼파라미터가 없으므로 빈 dict를 반환합니다.
-        # storage_path 인자는 다른 모델과의 호환성을 위해 유지합니다.
         print("LinearRegression does not require hyperparameter tuning.")
         return {}
 

@@ -1,5 +1,3 @@
-# src/models/base_model.py
-
 from abc import ABC, abstractmethod
 
 class BaseModel(ABC):
@@ -60,5 +58,4 @@ class BaseModel(ABC):
         Separates features and target variable from the dataframe.
         Handles feature selection based on the model type.
         """
-        # This will be implemented in detail in each subclass
         pass

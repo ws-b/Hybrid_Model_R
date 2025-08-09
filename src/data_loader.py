@@ -1,5 +1,3 @@
-# src/data_loader.py
-
 import os
 import pandas as pd
 import glob
@@ -30,17 +28,14 @@ class DataLoader:
         df_list = []
         for f in files:
             df = pd.read_csv(f)
-            # 'time' 컬럼을 지정된 포맷으로 명시하여 파싱합니다.
             df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
             df_list.append(df)
             
-        # Add a trip_id to distinguish individual trips
         for i, df in enumerate(df_list):
             df['trip_id'] = i
             
         combined_df = pd.concat(df_list, ignore_index=True)
         
-        # 만약 포맷이 맞지 않아 파싱에 실패한 행이 있다면 (NaT), 해당 행을 제거하여 오류를 방지합니다.
         if combined_df['time'].isnull().any():
             print("Warning: Rows with datetime parsing errors were found and have been dropped.")
             combined_df.dropna(subset=['time'], inplace=True)
@@ -62,7 +57,6 @@ class DataLoader:
         self.full_dataset['physics_prediction'] = self.full_dataset['Power_phys']
 
         # 3. 롤링 피처(Rolling Features) 생성
-        # 논문에 명시된 대로 10초 윈도우만 사용합니다.
         print("Generating rolling features for a 10-second window...")
         window = 5
         
@@ -86,7 +80,7 @@ class DataLoader:
                 lambda x: x.rolling(window, min_periods=1).std()
             )
         
-        # 롤링 피처 생성 시 초반에 발생하는 NaN 값을 0으로 채웁니다.
+        # 롤링 피처 생성 시 초반에 발생하는 NaN 값을 0으로 채움
         self.full_dataset.fillna(0, inplace=True)
         print("Feature generation complete.")
 

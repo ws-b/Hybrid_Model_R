@@ -71,3 +71,5 @@ results/
 *.png
 *.json
 *.html
+plot_figure3.py
+delete_study.py

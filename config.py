@@ -1,12 +1,10 @@
-# config.py
-
 # 1. Data and Vehicle Settings
 # ----------------------------------
 # Path to the directory containing the dataset
-DATA_PATH = "/home/ubuntu/SamsungSTF/Processed_Data/TripByTrip"
+DATA_PATH = "/home/ubuntu/SamsungSTF/Processed_Data/Trips"
 
 # Select the vehicle to be used in the experiment
-SELECTED_VEHICLE = "Ioniq5"
+SELECTED_VEHICLE = "NiroEV"
 
 
 # 2. Sampling and Experiment Settings
@@ -35,7 +33,7 @@ MODELS_TO_RUN = ["XGBoost", "RandomForest", "MLP", "Transformer", "LinearRegress
 MODELS_TO_TUNE = ["XGBoost", "RandomForest", "MLP", "Transformer", "LinearRegression"]
 
 # Optuna settings for hyperparameter tuning
-N_TRIALS_OPTUNA = 20  # Number of trials for each model's tuning process
+N_TRIALS_OPTUNA = 25  # Number of trials for each model's tuning process
 # N_TRIALS_OPTUNA = 3 // FOR DEBUGGING
 
 # 4. Feature Settings
@@ -47,4 +45,4 @@ TRANSFORMER_FEATURES = ['speed', 'acceleration', 'ext_temp']
 # ----------------------------------
 # 여기에 적힌 모델은 튜닝 및 평가 과정에서 건너뜁니다.
 # 예: ["RandomForest", "MLP"]
-MODELS_TO_SKIP = ["RandomForest"]
+MODELS_TO_SKIP = []

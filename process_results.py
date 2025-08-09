@@ -1,5 +1,3 @@
-# process_results.py
-
 import os
 import json
 import pandas as pd
@@ -16,7 +14,6 @@ def process_results():
         return
 
     all_results = []
-    # 한 번만 추가하기 위한 플래그
     physics_added_for_iteration = set()
 
     for filename in os.listdir(log_dir):
@@ -28,7 +25,6 @@ def process_results():
                 model_name = filename.split('_size_')[0]
                 iteration_key = (data['sample_size'], data['iteration'])
                 
-                # 물리 모델은 각 iteration 당 한 번만 추가
                 if iteration_key not in physics_added_for_iteration:
                     all_results.append({
                         'sample_size': data['sample_size'],
@@ -37,7 +33,6 @@ def process_results():
                     })
                     physics_added_for_iteration.add(iteration_key)
 
-                # ML 모델 결과 추가
                 all_results.append({
                     'sample_size': data['sample_size'],
                     'model': f"Hybrid_{model_name}",
@@ -61,29 +56,22 @@ def process_results():
     pivot_mean = summary.pivot(index='sample_size', columns='model', values='mean')
     pivot_std = summary.pivot(index='sample_size', columns='model', values='std')
 
-    # 1. 현재 컬럼 목록을 가져옵니다.
     all_model_columns = sorted(pivot_mean.columns.tolist())
     
-    # 2. 원하는 순서로 재구성합니다.
     ordered_columns = []
     if 'Physics_Based' in all_model_columns:
         ordered_columns.append('Physics_Based')
         all_model_columns.remove('Physics_Based')
     
-    # Hybrid 모델들을 먼저 추가 (정렬된 순서로)
     hybrid_cols = sorted([col for col in all_model_columns if 'Hybrid' in col])
     ordered_columns.extend(hybrid_cols)
 
-    # OnlyML 모델들을 추가 (정렬된 순서로)
     onlyml_cols = sorted([col for col in all_model_columns if 'OnlyML' in col])
     ordered_columns.extend(onlyml_cols)
     
-    # 3. 데이터프레임의 컬럼 순서를 재적용합니다.
     pivot_mean = pivot_mean.reindex(columns=ordered_columns)
     pivot_std = pivot_std.reindex(columns=ordered_columns)
-    # -------------------------------
 
-    # 최종 결과 출력
     print("\n" + "="*80)
     print(f"Final Aggregated Results for: {SELECTED_VEHICLE}")
     print("="*80)
